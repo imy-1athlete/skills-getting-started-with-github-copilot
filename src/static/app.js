@@ -14,17 +14,38 @@ document.addEventListener("DOMContentLoaded", () => {
       activitiesList.innerHTML = "";
 
       // Populate activities list
+      activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
+
+      const safeAttribute = (value) => String(value).replace(/"/g, "&quot;");
+
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        const participantsHtml = details.participants.length
+          ? `<div class="participants">
+               <p><strong>Participants:</strong></p>
+               <ul class="participants-list">
+                 ${details.participants
+                   .map(
+                     (participant) =>
+                       `<li class="participant-item"><span class="participant-email">${participant}</span><button type="button" class="delete-participant" data-activity="${safeAttribute(
+                         name
+                       )}" data-email="${safeAttribute(participant)}" aria-label="Remove ${participant}">&times;</button></li>`
+                   )
+                   .join("")}
+               </ul>
+             </div>`
+          : `<p class="no-participants">No participants signed up yet.</p>`;
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          ${participantsHtml}
         `;
 
         activitiesList.appendChild(activityCard);
@@ -60,11 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         messageDiv.textContent = result.message;
-        messageDiv.className = "success";
+        messageDiv.className = "message success";
         signupForm.reset();
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+        messageDiv.className = "message error";
       }
 
       messageDiv.classList.remove("hidden");
